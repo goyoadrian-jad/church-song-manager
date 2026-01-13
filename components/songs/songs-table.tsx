@@ -30,15 +30,19 @@ interface Song {
     id: string
     name: string
   } | null
+  creator?: {
+    first_name: string
+    last_name: string
+  } | null
   created_at: string
 }
 
 interface SongsTableProps {
   songs: Song[]
-  canManage: boolean
+  canEdit: boolean
 }
 
-export function SongsTable({ songs, canManage }: SongsTableProps) {
+export function SongsTable({ songs, canEdit }: SongsTableProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [deleteSongId, setDeleteSongId] = useState<string | null>(null)
@@ -124,7 +128,7 @@ export function SongsTable({ songs, canManage }: SongsTableProps) {
                           <Eye className="h-4 w-4" />
                         </Link>
                       </Button>
-                      {canManage && (
+                      {canEdit && (
                         <>
                           <Button variant="ghost" size="icon" asChild>
                             <Link href={`/dashboard/songs/edit/${song.id}`}>

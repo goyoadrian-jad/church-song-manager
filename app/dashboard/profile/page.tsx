@@ -17,7 +17,7 @@ export default async function ProfilePage() {
     redirect("/auth/login")
   }
 
-  const { data: profile } = await supabase.from("users").select("*").eq("id", user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).single()
 
   if (!profile) {
     redirect("/dashboard")
@@ -54,7 +54,7 @@ export default async function ProfilePage() {
 
               <div>
                 <p className="text-sm text-muted-foreground">Correo Electrónico</p>
-                <p className="text-lg font-medium">{profile.email}</p>
+                <p className="text-lg font-medium">{user.email}</p>
               </div>
 
               <div>

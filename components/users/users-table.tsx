@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Pencil, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import { useState } from "react"
 import {
   AlertDialog,
@@ -18,6 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { deleteUser } from "@/app/actions/delete-user"
+import { useToast } from "@/hooks/use-toast"
 
 interface User {
   id: string
@@ -36,6 +37,7 @@ interface UsersTableProps {
 
 export function UsersTable({ users, isAdmin, currentUserId }: UsersTableProps) {
   const router = useRouter()
+  const { toast } = useToast()
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -43,19 +45,31 @@ export function UsersTable({ users, isAdmin, currentUserId }: UsersTableProps) {
     if (!deleteUserId) return
 
     setIsDeleting(true)
-    const supabase = createClient()
 
     try {
-      // Delete from auth.users (will cascade to public.users)
-      const { error } = await supabase.auth.admin.deleteUser(deleteUserId)
+      const result = await deleteUser(deleteUserId)
 
-      if (error) throw error
-
-      setDeleteUserId(null)
-      router.refresh()
+      if (result.error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.error,
+        })
+      } else {
+        toast({
+          title: "Usuario eliminado",
+          description: "El usuario ha sido eliminado exitosamente",
+        })
+        setDeleteUserId(null)
+        router.refresh()
+      }
     } catch (error) {
       console.error("[v0] Error deleting user:", error)
-      alert("Error al eliminar usuario")
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Error al eliminar usuario",
+      })
     } finally {
       setIsDeleting(false)
     }

@@ -16,11 +16,9 @@ export default async function UsersPage() {
     redirect("/auth/login")
   }
 
-  // Get current user profile
-  const { data: currentProfile } = await supabase.from("users").select("*").eq("id", user.id).single()
+  const { data: currentProfile } = await supabase.from("profiles").select("*").eq("user_id", user.id).single()
 
-  // Get all users
-  const { data: users } = await supabase.from("users").select("*").order("created_at", { ascending: false })
+  const { data: profiles } = await supabase.from("profiles").select("*").order("created_at", { ascending: false })
 
   const isAdmin = currentProfile?.role === "Admin"
 
@@ -56,7 +54,7 @@ export default async function UsersPage() {
             <CardTitle>Lista de Usuarios</CardTitle>
           </CardHeader>
           <CardContent>
-            <UsersTable users={users || []} isAdmin={isAdmin} currentUserId={user.id} />
+            <UsersTable users={profiles || []} isAdmin={isAdmin} currentUserId={user.id} />
           </CardContent>
         </Card>
       </div>

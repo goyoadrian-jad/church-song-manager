@@ -16,17 +16,15 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
     redirect("/auth/login")
   }
 
-  // Check if user is Admin
-  const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("role").eq("user_id", user.id).single()
 
   if (profile?.role !== "Admin") {
     redirect("/dashboard/users")
   }
 
-  // Get user to edit
-  const { data: userToEdit } = await supabase.from("users").select("*").eq("id", id).single()
+  const { data: profileToEdit } = await supabase.from("profiles").select("*").eq("id", id).single()
 
-  if (!userToEdit) {
+  if (!profileToEdit) {
     redirect("/dashboard/users")
   }
 
@@ -45,7 +43,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
-        <UserForm user={userToEdit} />
+        <UserForm user={profileToEdit} />
       </div>
     </div>
   )

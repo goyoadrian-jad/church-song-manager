@@ -44,7 +44,7 @@ export default function HomePage() {
               <Link href="/auth/login">Iniciar Sesión</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="text-lg px-8 bg-transparent">
-              <Link href="/auth/sign-up">Registrarse</Link>
+              
             </Button>
           </div>
         </div>

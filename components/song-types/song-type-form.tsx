@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
 
 interface SongTypeFormProps {
   songType?: {
@@ -21,6 +22,7 @@ interface SongTypeFormProps {
 
 export function SongTypeForm({ songType }: SongTypeFormProps) {
   const router = useRouter()
+  const { toast } = useToast()
   const [formData, setFormData] = useState({
     name: songType?.name || "",
     description: songType?.description || "",
@@ -48,6 +50,11 @@ export function SongTypeForm({ songType }: SongTypeFormProps) {
           .eq("id", songType.id)
 
         if (updateError) throw updateError
+
+        toast({
+          title: "Tipo actualizado",
+          description: "El tipo de canción se actualizó correctamente",
+        })
       } else {
         // Create new song type
         const { error: insertError } = await supabase.from("song_types").insert({
@@ -56,14 +63,25 @@ export function SongTypeForm({ songType }: SongTypeFormProps) {
         })
 
         if (insertError) throw insertError
+
+        toast({
+          title: "Tipo creado",
+          description: "El tipo de canción se creó correctamente",
+        })
       }
 
-      router.push("/dashboard/song-types")
-      router.refresh()
+      setTimeout(() => {
+        window.location.href = "/dashboard/song-types"
+      }, 1000)
     } catch (error: unknown) {
       console.error("[v0] Error saving song type:", error)
-      setError(error instanceof Error ? error.message : "Error al guardar tipo de canción")
-    } finally {
+      const errorMessage = error instanceof Error ? error.message : "Error al guardar tipo de canción"
+      setError(errorMessage)
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
       setIsLoading(false)
     }
   }

@@ -15,10 +15,9 @@ export default async function CreateSongPage() {
     redirect("/auth/login")
   }
 
-  // Check if user can manage songs
-  const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("role").eq("user_id", user.id).single()
 
-  if (profile?.role !== "Admin" && profile?.role !== "Lider") {
+  if (profile?.role !== "Admin" && profile?.role !== "Editor y Creador") {
     redirect("/dashboard/songs")
   }
 

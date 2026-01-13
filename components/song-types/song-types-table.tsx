@@ -17,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useToast } from "@/hooks/use-toast"
 
 interface SongType {
   id: string
@@ -32,6 +33,7 @@ interface SongTypesTableProps {
 
 export function SongTypesTable({ songTypes, canManage }: SongTypesTableProps) {
   const router = useRouter()
+  const { toast } = useToast()
   const [deleteTypeId, setDeleteTypeId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -42,15 +44,43 @@ export function SongTypesTable({ songTypes, canManage }: SongTypesTableProps) {
     const supabase = createClient()
 
     try {
+      const { data: songs, error: checkError } = await supabase
+        .from("songs")
+        .select("id")
+        .eq("song_type_id", deleteTypeId)
+        .limit(1)
+
+      if (checkError) throw checkError
+
+      if (songs && songs.length > 0) {
+        toast({
+          title: "No se puede eliminar",
+          description: "Este tipo de canción está siendo usado por canciones existentes",
+          variant: "destructive",
+        })
+        setDeleteTypeId(null)
+        setIsDeleting(false)
+        return
+      }
+
       const { error } = await supabase.from("song_types").delete().eq("id", deleteTypeId)
 
       if (error) throw error
+
+      toast({
+        title: "Tipo eliminado",
+        description: "El tipo de canción ha sido eliminado exitosamente",
+      })
 
       setDeleteTypeId(null)
       router.refresh()
     } catch (error) {
       console.error("[v0] Error deleting song type:", error)
-      alert("Error al eliminar tipo de canción. Puede que haya canciones asociadas.")
+      toast({
+        title: "Error",
+        description: "Error al eliminar tipo de canción",
+        variant: "destructive",
+      })
     } finally {
       setIsDeleting(false)
     }

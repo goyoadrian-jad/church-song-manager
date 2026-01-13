@@ -107,15 +107,9 @@ export function SongForm({ song, songTypes, userId }: SongFormProps) {
         if (updateError) throw updateError
 
         toast({
-          title: "✓ Canción actualizada",
+          title: "Canción actualizada",
           description: "La canción ha sido actualizada exitosamente",
         })
-
-        // Esperar un momento para que se vea el toast antes de redirigir
-        setTimeout(() => {
-          router.push("/dashboard/songs")
-          router.refresh()
-        }, 500)
       } else {
         // Create new song
         const { error: insertError } = await supabase.from("songs").insert({
@@ -126,26 +120,23 @@ export function SongForm({ song, songTypes, userId }: SongFormProps) {
         if (insertError) throw insertError
 
         toast({
-          title: "✓ Canción creada",
+          title: "Canción creada",
           description: "La canción ha sido creada exitosamente",
         })
-
-        // Esperar un momento para que se vea el toast antes de redirigir
-        setTimeout(() => {
-          router.push("/dashboard/songs")
-          router.refresh()
-        }, 500)
       }
+
+      setTimeout(() => {
+        window.location.href = "/dashboard/songs"
+      }, 1000)
     } catch (error: unknown) {
       console.error("[v0] Error saving song:", error)
       const errorMessage = error instanceof Error ? error.message : "Error al guardar canción"
       setError(errorMessage)
       toast({
-        title: "✕ Error",
+        title: "Error",
         description: errorMessage,
         variant: "destructive",
       })
-    } finally {
       setIsLoading(false)
     }
   }

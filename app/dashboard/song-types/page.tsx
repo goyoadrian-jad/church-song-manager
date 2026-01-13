@@ -16,13 +16,12 @@ export default async function SongTypesPage() {
     redirect("/auth/login")
   }
 
-  // Get current user profile
-  const { data: currentProfile } = await supabase.from("users").select("*").eq("id", user.id).single()
+  const { data: currentProfile } = await supabase.from("profiles").select("*").eq("user_id", user.id).single()
 
   // Get all song types
   const { data: songTypes } = await supabase.from("song_types").select("*").order("created_at", { ascending: false })
 
-  const canManage = currentProfile?.role === "Admin" || currentProfile?.role === "Lider"
+  const canManage = currentProfile?.role === "Admin"
 
   return (
     <div className="min-h-svh bg-gradient-to-br from-background to-muted/20">

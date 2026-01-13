@@ -8,8 +8,8 @@ interface RoleBadgeProps {
 export function RoleBadge({ role }: RoleBadgeProps) {
   const variants = {
     Admin: "default" as const,
-    Lider: "secondary" as const,
-    Multimedia: "outline" as const,
+    Editor: "secondary" as const,
+    Lector: "outline" as const,
   }
 
   return <Badge variant={variants[role]}>{role}</Badge>
