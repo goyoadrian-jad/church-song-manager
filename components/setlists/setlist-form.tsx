@@ -13,12 +13,20 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
-import { X, GripVertical } from "lucide-react"
+import { X, GripVertical, Eye, ExternalLink } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 interface Song {
   id: string
   name: string
   artist: string
+  key?: string
+  lyrics?: string
+  youtube_link?: string
+  creator?: {
+    first_name: string
+    last_name: string
+  }
 }
 
 interface SetlistFormProps {
@@ -43,7 +51,9 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
   const [selectedSongs, setSelectedSongs] = useState<string[]>(selectedSongIds)
   const [searchTerm, setSearchTerm] = useState("")
 
-  const filteredSongs = songs.filter(
+  const availableSongs = songs.filter((song) => !selectedSongs.includes(song.id))
+
+  const filteredSongs = availableSongs.filter(
     (song) =>
       song.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       song.artist.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -226,11 +236,51 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
             <CardContent className="p-4">
               <div className="space-y-2">
                 {getSelectedSongDetails().map((song, index) => (
-                  <div key={song.id} className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                    <span className="font-semibold text-sm w-8">{index + 1}.</span>
-                    <div className="flex-1">
-                      <p className="font-medium">{song.name}</p>
-                      <p className="text-sm text-muted-foreground">{song.artist}</p>
+                  <div key={song.id} className="flex items-start gap-3 p-4 bg-muted rounded-lg border">
+                    <span className="font-bold text-lg w-8 mt-1">{index + 1}.</span>
+                    <div className="flex-1 space-y-2">
+                      <div>
+                        <p className="font-semibold text-lg">{song.name}</p>
+                        <p className="text-sm text-muted-foreground">{song.artist}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-4 text-sm">
+                        {song.key && (
+                          <span className="flex items-center gap-1">
+                            <strong>Tonalidad:</strong> {song.key}
+                          </span>
+                        )}
+                        {song.creator && (
+                          <span className="flex items-center gap-1">
+                            <strong>Líder:</strong> {song.creator.first_name} {song.creator.last_name}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        {song.lyrics && (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button type="button" variant="outline" size="sm">
+                                <Eye className="h-4 w-4 mr-1" />
+                                Ver Letra
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>{song.name}</DialogTitle>
+                              </DialogHeader>
+                              <div className="whitespace-pre-wrap text-sm">{song.lyrics}</div>
+                            </DialogContent>
+                          </Dialog>
+                        )}
+                        {song.youtube_link && (
+                          <Button type="button" variant="outline" size="sm" asChild>
+                            <a href={song.youtube_link} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-4 w-4 mr-1" />
+                              YouTube
+                            </a>
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     <div className="flex gap-1">
                       <Button
@@ -264,27 +314,33 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
       </div>
 
       <div className="space-y-4">
-        <Label>Seleccionar Canciones</Label>
+        <Label>Seleccionar Canciones ({availableSongs.length} disponibles)</Label>
         <Input placeholder="Buscar canciones..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         <Card className="max-h-96 overflow-y-auto">
           <CardContent className="p-4">
             <div className="space-y-2">
-              {filteredSongs.map((song) => (
-                <div
-                  key={song.id}
-                  className="flex items-center space-x-3 p-2 hover:bg-muted rounded-lg cursor-pointer"
-                  onClick={() => handleToggleSong(song.id)}
-                >
-                  <Checkbox
-                    checked={selectedSongs.includes(song.id)}
-                    onCheckedChange={() => handleToggleSong(song.id)}
-                  />
-                  <div className="flex-1">
-                    <p className="font-medium">{song.name}</p>
-                    <p className="text-sm text-muted-foreground">{song.artist}</p>
+              {filteredSongs.length === 0 ? (
+                <p className="text-center text-muted-foreground py-4">
+                  {searchTerm ? "No se encontraron canciones" : "Todas las canciones están seleccionadas"}
+                </p>
+              ) : (
+                filteredSongs.map((song) => (
+                  <div key={song.id} className="flex items-center space-x-3 p-2 hover:bg-muted rounded-lg">
+                    <Checkbox
+                      checked={selectedSongs.includes(song.id)}
+                      onCheckedChange={() => handleToggleSong(song.id)}
+                    />
+                    <label
+                      htmlFor={`song-${song.id}`}
+                      className="flex-1 cursor-pointer"
+                      onClick={() => handleToggleSong(song.id)}
+                    >
+                      <p className="font-medium">{song.name}</p>
+                      <p className="text-sm text-muted-foreground">{song.artist}</p>
+                    </label>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

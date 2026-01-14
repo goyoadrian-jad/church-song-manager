@@ -32,7 +32,6 @@ export default async function SetlistsPage() {
 
   return (
     <>
-      <DashboardHeader profile={profile} />
       <SetlistsPageClient setlists={setlists || []} profile={profile} />
     </>
   )

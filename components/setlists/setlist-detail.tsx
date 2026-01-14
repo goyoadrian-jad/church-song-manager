@@ -2,8 +2,9 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, User, Clock, Eye } from "lucide-react"
+import { Calendar, User, Clock } from "lucide-react"
 import Link from "next/link"
+import { SongCardDetail } from "@/components/songs/song-card-detail"
 
 interface SetlistDetailProps {
   setlist: any
@@ -63,31 +64,15 @@ export default function SetlistDetail({ setlist, songs }: SetlistDetailProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {songs.map((item, index) => {
-              const song = item.songs
-              return (
-                <div
-                  key={item.position}
-                  className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <span className="font-bold text-2xl text-muted-foreground w-8">{index + 1}</span>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg">{song.name}</h3>
-                    <p className="text-sm text-muted-foreground">{song.artist}</p>
-                    {song.key && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Tonalidad: <span className="font-medium">{song.key}</span>
-                      </p>
-                    )}
-                  </div>
-                  <Button asChild variant="outline" size="icon">
-                    <Link href={`/dashboard/songs/view/${song.id}`} target="_blank">
-                      <Eye className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-              )
-            })}
+            {songs.map((item, index) => (
+              <SongCardDetail
+                key={item.position}
+                song={item.songs}
+                creator={item.songs.creator}
+                position={index + 1}
+                showPosition={true}
+              />
+            ))}
           </div>
         </CardContent>
       </Card>

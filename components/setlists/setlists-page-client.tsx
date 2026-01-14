@@ -1,9 +1,11 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus } from "lucide-react"
 import Link from "next/link"
 import { SetlistsTable } from "./setlists-table"
+import { useState, useMemo } from "react"
 
 interface SetlistsPageClientProps {
   setlists: any[]
@@ -14,6 +16,34 @@ interface SetlistsPageClientProps {
 
 export function SetlistsPageClient({ setlists, profile }: SetlistsPageClientProps) {
   const canCreate = profile.role === "Admin" || profile.role === "Editor y Creador"
+
+  const [filter, setFilter] = useState<"upcoming" | "past" | "all">("upcoming")
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  // Filtrar setlists según la opción seleccionada
+  const filteredSetlists = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    if (filter === "upcoming") {
+      return setlists.filter((s) => new Date(s.date) >= today)
+    } else if (filter === "past") {
+      return setlists.filter((s) => new Date(s.date) < today)
+    }
+    return setlists
+  }, [setlists, filter])
+
+  // Calcular paginación
+  const totalPages = Math.ceil(filteredSetlists.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedSetlists = filteredSetlists.slice(startIndex, startIndex + itemsPerPage)
+
+  // Resetear página al cambiar filtro
+  const handleFilterChange = (value: "upcoming" | "past" | "all") => {
+    setFilter(value)
+    setCurrentPage(1)
+  }
 
   return (
     <div className="min-h-svh bg-gradient-to-br from-background to-muted/20">
@@ -33,7 +63,44 @@ export function SetlistsPageClient({ setlists, profile }: SetlistsPageClientProp
           )}
         </div>
 
-        <SetlistsTable setlists={setlists} canEdit={canCreate} />
+        <div className="mb-6">
+          <Select value={filter} onValueChange={handleFilterChange}>
+            <SelectTrigger className="w-[250px]">
+              <SelectValue placeholder="Filtrar reuniones" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="upcoming">Reuniones Siguientes</SelectItem>
+              <SelectItem value="past">Reuniones Pasadas</SelectItem>
+              <SelectItem value="all">Todas las Reuniones</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <SetlistsTable setlists={paginatedSetlists} canEdit={canCreate} />
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Página {currentPage} de {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Siguiente
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )

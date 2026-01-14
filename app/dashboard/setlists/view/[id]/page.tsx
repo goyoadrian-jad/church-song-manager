@@ -34,14 +34,40 @@ export default async function ViewSetlistPage({
     .from("setlist_songs")
     .select(`
       position,
-      songs(id, name, artist, key, lyrics, youtube_link)
+      songs(id, name, artist, key, lyrics, youtube_link, created_by)
     `)
     .eq("setlist_id", id)
     .order("position")
 
+  const creatorIds = setlistSongs?.map((item: any) => item.songs.created_by).filter(Boolean) || []
+  const uniqueCreatorIds = [...new Set(creatorIds)]
+
+  let creatorsMap: Record<string, any> = {}
+  if (uniqueCreatorIds.length > 0) {
+    const { data: creators } = await supabase
+      .from("profiles")
+      .select("user_id, first_name, last_name")
+      .in("user_id", uniqueCreatorIds)
+
+    creatorsMap =
+      creators?.reduce((acc: any, creator: any) => {
+        acc[creator.user_id] = creator
+        return acc
+      }, {}) || {}
+  }
+
+  // Combinar canciones con sus creadores
+  const songsWithCreators = setlistSongs?.map((item: any) => ({
+    ...item,
+    songs: {
+      ...item.songs,
+      creator: creatorsMap[item.songs.created_by] || null,
+    },
+  }))
+
   return (
     <div className="container mx-auto py-8 px-4">
-      <SetlistDetail setlist={setlist} songs={setlistSongs || []} />
+      <SetlistDetail setlist={setlist} songs={songsWithCreators || []} />
     </div>
   )
 }
