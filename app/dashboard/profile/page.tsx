@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { RoleBadge } from "@/components/ui/role-badge"
 import { getRoleDescription } from "@/lib/auth/permissions"
+import { ChangePasswordForm } from "@/components/profile/change-password-form"
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -38,50 +39,62 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Información Personal</CardTitle>
-            <CardDescription>Detalles de tu cuenta en el sistema</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Nombre Completo</p>
-                <p className="text-lg font-medium">
-                  {profile.first_name} {profile.last_name}
-                </p>
-              </div>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Información Personal</CardTitle>
+              <CardDescription>Detalles de tu cuenta en el sistema</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Nombre Completo</p>
+                  <p className="text-lg font-medium">
+                    {profile.first_name} {profile.last_name}
+                  </p>
+                </div>
 
-              <div>
-                <p className="text-sm text-muted-foreground">Correo Electrónico</p>
-                <p className="text-lg font-medium">{user.email}</p>
-              </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Correo Electrónico</p>
+                  <p className="text-lg font-medium">{user.email}</p>
+                </div>
 
-              <div>
-                <p className="text-sm text-muted-foreground">Rol</p>
-                <div className="mt-1">
-                  <RoleBadge role={profile.role} />
+                <div>
+                  <p className="text-sm text-muted-foreground">Rol</p>
+                  <div className="mt-1">
+                    <RoleBadge role={profile.role} />
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm text-muted-foreground">Descripción del Rol</p>
+                  <p className="text-sm leading-relaxed mt-1">{getRoleDescription(profile.role)}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-muted-foreground">Miembro desde</p>
+                  <p className="text-sm">
+                    {new Date(profile.created_at).toLocaleDateString("es-ES", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <div>
-                <p className="text-sm text-muted-foreground">Descripción del Rol</p>
-                <p className="text-sm leading-relaxed mt-1">{getRoleDescription(profile.role)}</p>
-              </div>
-
-              <div>
-                <p className="text-sm text-muted-foreground">Miembro desde</p>
-                <p className="text-sm">
-                  {new Date(profile.created_at).toLocaleDateString("es-ES", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Cambiar Contraseña</CardTitle>
+              <CardDescription>Actualiza tu contraseña de acceso</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChangePasswordForm />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )

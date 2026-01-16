@@ -56,7 +56,16 @@ export default async function SongsPage() {
   // Get all song types for filter
   const { data: songTypes } = await supabase.from("song_types").select("id, name").order("name")
 
-  const canCreate = currentProfile?.role === "Admin" || currentProfile?.role === "Editor"
+  const { data: allProfiles } = await supabase
+    .from("profiles")
+    .select("user_id, first_name, last_name")
+    .order("first_name")
+
+  // Get unique creators from songs
+  const creatorIds = [...new Set((songs || []).map((s) => s.created_by).filter(Boolean))]
+  const leaders = (allProfiles || []).filter((p) => creatorIds.includes(p.user_id))
+
+  const canCreate = currentProfile?.role === "Admin" || currentProfile?.role === "Editor y Creador"
   const canEdit = currentProfile?.role === "Admin"
 
   return (
@@ -78,6 +87,7 @@ export default async function SongsPage() {
         <SongsPageClient
           songs={songsWithProfiles || []}
           songTypes={songTypes || []}
+          leaders={leaders || []}
           canCreate={canCreate}
           canEdit={canEdit}
         />

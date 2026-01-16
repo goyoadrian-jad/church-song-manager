@@ -60,7 +60,7 @@ export function SongsTable({ songs, canEdit }: SongsTableProps) {
       if (error) throw error
 
       toast({
-        title: "✓ Canción eliminada",
+        title: "Canción eliminada",
         description: "La canción ha sido eliminada exitosamente",
       })
 
@@ -69,7 +69,7 @@ export function SongsTable({ songs, canEdit }: SongsTableProps) {
     } catch (error) {
       console.error("[v0] Error deleting song:", error)
       toast({
-        title: "✕ Error",
+        title: "Error",
         description: "Error al eliminar la canción",
         variant: "destructive",
       })
@@ -88,6 +88,7 @@ export function SongsTable({ songs, canEdit }: SongsTableProps) {
               <TableHead>Artista</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Tonalidad</TableHead>
+              <TableHead>Líder</TableHead>
               <TableHead>YouTube</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
@@ -95,7 +96,7 @@ export function SongsTable({ songs, canEdit }: SongsTableProps) {
           <TableBody>
             {songs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
                   No hay canciones registradas
                 </TableCell>
               </TableRow>
@@ -109,6 +110,15 @@ export function SongsTable({ songs, canEdit }: SongsTableProps) {
                   </TableCell>
                   <TableCell>
                     <Badge>{song.key}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {song.creator ? (
+                      <span className="text-sm">
+                        {song.creator.first_name} {song.creator.last_name}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {song.youtube_link ? (

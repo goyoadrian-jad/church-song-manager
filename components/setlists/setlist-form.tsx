@@ -13,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
-import { X, GripVertical, Eye, ExternalLink } from "lucide-react"
+import { X, GripVertical, Eye, ExternalLink, Search } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 interface Song {
@@ -23,6 +23,7 @@ interface Song {
   key?: string
   lyrics?: string
   youtube_link?: string
+  created_by?: string
   creator?: {
     first_name: string
     last_name: string
@@ -50,14 +51,34 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
 
   const [selectedSongs, setSelectedSongs] = useState<string[]>(selectedSongIds)
   const [searchTerm, setSearchTerm] = useState("")
+  const [leaderFilter, setLeaderFilter] = useState("all")
+
+  // Get unique leaders from songs
+  const leaders = songs.reduce(
+    (acc, song) => {
+      if (song.created_by && song.creator && !acc.find((l) => l.user_id === song.created_by)) {
+        acc.push({
+          user_id: song.created_by,
+          first_name: song.creator.first_name,
+          last_name: song.creator.last_name,
+        })
+      }
+      return acc
+    },
+    [] as Array<{ user_id: string; first_name: string; last_name: string }>,
+  )
 
   const availableSongs = songs.filter((song) => !selectedSongs.includes(song.id))
 
-  const filteredSongs = availableSongs.filter(
-    (song) =>
+  const filteredSongs = availableSongs.filter((song) => {
+    const matchesSearch =
       song.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      song.artist.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+      song.artist.toLowerCase().includes(searchTerm.toLowerCase())
+
+    const matchesLeader = leaderFilter === "all" || song.created_by === leaderFilter
+
+    return matchesSearch && matchesLeader
+  })
 
   const handleToggleSong = (songId: string) => {
     setSelectedSongs((prev) => (prev.includes(songId) ? prev.filter((id) => id !== songId) : [...prev, songId]))
@@ -107,7 +128,6 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
       let setlistId = setlist?.id
 
       if (setlist) {
-        // Actualizar setlist existente
         const { error: updateError } = await supabase
           .from("setlists")
           .update({
@@ -121,10 +141,8 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
 
         if (updateError) throw updateError
 
-        // Eliminar canciones antiguas
         await supabase.from("setlist_songs").delete().eq("setlist_id", setlist.id)
       } else {
-        // Crear nuevo setlist
         const { data: newSetlist, error: createError } = await supabase
           .from("setlists")
           .insert({
@@ -141,7 +159,6 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
         setlistId = newSetlist.id
       }
 
-      // Insertar canciones en el orden especificado
       const setlistSongsData = selectedSongs.map((songId, index) => ({
         setlist_id: setlistId,
         song_id: songId,
@@ -315,29 +332,61 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
 
       <div className="space-y-4">
         <Label>Seleccionar Canciones ({availableSongs.length} disponibles)</Label>
-        <Input placeholder="Buscar canciones..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+
+        <div className="flex gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar canciones..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={leaderFilter} onValueChange={setLeaderFilter}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filtrar por líder" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los líderes</SelectItem>
+              {leaders.map((leader) => (
+                <SelectItem key={leader.user_id} value={leader.user_id}>
+                  {leader.first_name} {leader.last_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <Card className="max-h-96 overflow-y-auto">
           <CardContent className="p-4">
             <div className="space-y-2">
               {filteredSongs.length === 0 ? (
                 <p className="text-center text-muted-foreground py-4">
-                  {searchTerm ? "No se encontraron canciones" : "Todas las canciones están seleccionadas"}
+                  {searchTerm || leaderFilter !== "all"
+                    ? "No se encontraron canciones"
+                    : "Todas las canciones están seleccionadas"}
                 </p>
               ) : (
                 filteredSongs.map((song) => (
-                  <div key={song.id} className="flex items-center space-x-3 p-2 hover:bg-muted rounded-lg">
-                    <Checkbox
-                      checked={selectedSongs.includes(song.id)}
-                      onCheckedChange={() => handleToggleSong(song.id)}
-                    />
-                    <label
-                      htmlFor={`song-${song.id}`}
-                      className="flex-1 cursor-pointer"
-                      onClick={() => handleToggleSong(song.id)}
-                    >
+                  <div
+                    key={song.id}
+                    className="flex items-center space-x-3 p-3 hover:bg-muted rounded-lg cursor-pointer"
+                    onClick={() => handleToggleSong(song.id)}
+                  >
+                    <Checkbox checked={selectedSongs.includes(song.id)} />
+                    <div className="flex-1">
                       <p className="font-medium">{song.name}</p>
-                      <p className="text-sm text-muted-foreground">{song.artist}</p>
-                    </label>
+                      <div className="flex gap-4 text-sm text-muted-foreground">
+                        <span>{song.artist}</span>
+                        {song.key && <span>• {song.key}</span>}
+                        {song.creator && (
+                          <span>
+                            • {song.creator.first_name} {song.creator.last_name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))
               )}

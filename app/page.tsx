@@ -11,7 +11,7 @@ export default function HomePage() {
           <div className="flex flex-col items-center gap-4 max-w-3xl">
             <div className="flex items-center gap-3">
               <Music2 className="h-16 w-16 text-primary" />
-              <h1 className="text-5xl font-bold tracking-tight">Repertorio Iglesia</h1>
+              <h1 className="text-5xl font-bold tracking-tight">Repertorio Iglesia VyP</h1>
             </div>
             <p className="text-xl text-muted-foreground leading-relaxed">
               Sistema completo de gestión musical para tu congregación. Organiza canciones, gestiona el equipo y mantén

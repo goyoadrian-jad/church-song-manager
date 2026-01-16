@@ -11,12 +11,14 @@ import { Card, CardContent } from "@/components/ui/card"
 interface SongFiltersProps {
   onFilterChange: (filters: SongFilters) => void
   songTypes: Array<{ id: string; name: string }>
+  leaders?: Array<{ user_id: string; first_name: string; last_name: string }>
 }
 
 export interface SongFilters {
   search: string
   songTypeId: string
   key: string
+  leaderId: string
 }
 
 const MUSIC_KEYS = [
@@ -51,11 +53,12 @@ const MUSIC_KEYS = [
   "Bm",
 ]
 
-export function SongFilters({ onFilterChange, songTypes }: SongFiltersProps) {
+export function SongFilters({ onFilterChange, songTypes, leaders = [] }: SongFiltersProps) {
   const [filters, setFilters] = useState<SongFilters>({
     search: "",
     songTypeId: "all",
     key: "all",
+    leaderId: "all",
   })
 
   const handleFilterChange = (key: keyof SongFilters, value: string) => {
@@ -69,17 +72,19 @@ export function SongFilters({ onFilterChange, songTypes }: SongFiltersProps) {
       search: "",
       songTypeId: "all",
       key: "all",
+      leaderId: "all",
     }
     setFilters(clearedFilters)
     onFilterChange(clearedFilters)
   }
 
-  const hasActiveFilters = filters.search || filters.songTypeId !== "all" || filters.key !== "all"
+  const hasActiveFilters =
+    filters.search || filters.songTypeId !== "all" || filters.key !== "all" || filters.leaderId !== "all"
 
   return (
     <Card className="mb-6">
       <CardContent className="pt-6">
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-5">
           <div className="space-y-2">
             <Label htmlFor="search">Buscar</Label>
             <div className="relative">
@@ -122,6 +127,23 @@ export function SongFilters({ onFilterChange, songTypes }: SongFiltersProps) {
                 {MUSIC_KEYS.map((key) => (
                   <SelectItem key={key} value={key}>
                     {key}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="leader">Líder</Label>
+            <Select value={filters.leaderId} onValueChange={(value) => handleFilterChange("leaderId", value)}>
+              <SelectTrigger id="leader">
+                <SelectValue placeholder="Todos los líderes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los líderes</SelectItem>
+                {leaders.map((leader) => (
+                  <SelectItem key={leader.user_id} value={leader.user_id}>
+                    {leader.first_name} {leader.last_name}
                   </SelectItem>
                 ))}
               </SelectContent>
