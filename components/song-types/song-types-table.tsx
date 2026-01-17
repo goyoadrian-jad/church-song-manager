@@ -145,7 +145,7 @@ export function SongTypesTable({ songTypes, canManage }: SongTypesTableProps) {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-white"
             >
               {isDeleting ? "Eliminando..." : "Eliminar"}
             </AlertDialogAction>

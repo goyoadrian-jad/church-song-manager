@@ -26,6 +26,7 @@ interface Song {
   artist: string
   key: string
   youtube_link: string | null
+  created_by?: string
   song_types: {
     id: string
     name: string
@@ -39,14 +40,19 @@ interface Song {
 
 interface SongsTableProps {
   songs: Song[]
-  canEdit: boolean
+  isAdmin: boolean
+  currentUserId: string
 }
 
-export function SongsTable({ songs, canEdit }: SongsTableProps) {
+export function SongsTable({ songs, isAdmin, currentUserId }: SongsTableProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [deleteSongId, setDeleteSongId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  const canEditSong = (song: Song) => {
+    return isAdmin || song.created_by === currentUserId
+  }
 
   const handleDelete = async () => {
     if (!deleteSongId) return
@@ -70,7 +76,7 @@ export function SongsTable({ songs, canEdit }: SongsTableProps) {
       console.error("[v0] Error deleting song:", error)
       toast({
         title: "Error",
-        description: "Error al eliminar la canción",
+        description: "No tienes permiso para eliminar esta canción",
         variant: "destructive",
       })
     } finally {
@@ -138,7 +144,7 @@ export function SongsTable({ songs, canEdit }: SongsTableProps) {
                           <Eye className="h-4 w-4" />
                         </Link>
                       </Button>
-                      {canEdit && (
+                      {canEditSong(song) && (
                         <>
                           <Button variant="ghost" size="icon" asChild>
                             <Link href={`/dashboard/songs/edit/${song.id}`}>
@@ -177,7 +183,7 @@ export function SongsTable({ songs, canEdit }: SongsTableProps) {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-white"
             >
               {isDeleting ? "Eliminando..." : "Eliminar"}
             </AlertDialogAction>

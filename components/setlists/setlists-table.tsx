@@ -7,12 +7,25 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
+import { ArrowLeft } from "lucide-react"
 
 interface SetlistsTableProps {
   setlists: any[]
   canEdit: boolean
+}
+
+function parseLocalDate(dateString: string): Date {
+  const [year, month, day] = dateString.split("-").map(Number)
+  return new Date(year, month - 1, day)
+}
+
+function formatDate(dateString: string): string {
+  const date = parseLocalDate(dateString)
+  return date.toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })
 }
 
 export function SetlistsTable({ setlists, canEdit }: SetlistsTableProps) {
@@ -62,7 +75,7 @@ export function SetlistsTable({ setlists, canEdit }: SetlistsTableProps) {
           ) : (
             setlists.map((setlist) => (
               <TableRow key={setlist.id}>
-                <TableCell>{format(new Date(setlist.date), "dd/MM/yyyy", { locale: es })}</TableCell>
+                <TableCell>{formatDate(setlist.date)}</TableCell>
                 <TableCell>{setlist.service_type}</TableCell>
                 <TableCell>
                   {setlist.leader?.first_name} {setlist.leader?.last_name}

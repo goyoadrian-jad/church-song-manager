@@ -6,12 +6,18 @@ import { Plus } from "lucide-react"
 import Link from "next/link"
 import { SetlistsTable } from "./setlists-table"
 import { useState, useMemo } from "react"
+import { ArrowLeft } from "lucide-react"
 
 interface SetlistsPageClientProps {
   setlists: any[]
   profile: {
     role: string
   }
+}
+
+function parseLocalDate(dateString: string): Date {
+  const [year, month, day] = dateString.split("-").map(Number)
+  return new Date(year, month - 1, day)
 }
 
 export function SetlistsPageClient({ setlists, profile }: SetlistsPageClientProps) {
@@ -28,16 +34,16 @@ export function SetlistsPageClient({ setlists, profile }: SetlistsPageClientProp
 
     let filtered: any[]
     if (filter === "upcoming") {
-      filtered = setlists.filter((s) => new Date(s.date) >= today)
+      filtered = setlists.filter((s) => parseLocalDate(s.date) >= today)
     } else if (filter === "past") {
-      filtered = setlists.filter((s) => new Date(s.date) < today)
+      filtered = setlists.filter((s) => parseLocalDate(s.date) < today)
     } else {
       filtered = [...setlists]
     }
 
     filtered.sort((a, b) => {
-      const dateA = new Date(a.date).getTime()
-      const dateB = new Date(b.date).getTime()
+      const dateA = parseLocalDate(a.date).getTime()
+      const dateB = parseLocalDate(b.date).getTime()
 
       if (filter === "past") {
         // Para pasadas, mostrar las más recientes primero
@@ -65,7 +71,12 @@ export function SetlistsPageClient({ setlists, profile }: SetlistsPageClientProp
   return (
     <div className="min-h-svh bg-gradient-to-br from-background to-muted/20">
       <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4 mb-6">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/dashboard">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+            </Button>
           <div>
             <h1 className="text-3xl font-bold">Setlists</h1>
             <p className="text-muted-foreground">Listas de canciones por reunión</p>

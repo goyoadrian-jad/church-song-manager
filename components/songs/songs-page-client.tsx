@@ -25,10 +25,18 @@ interface SongsPageClientProps {
   songTypes: Array<{ id: string; name: string }>
   leaders: Array<{ user_id: string; first_name: string; last_name: string }>
   canCreate: boolean
-  canEdit: boolean
+  isAdmin: boolean
+  currentUserId: string
 }
 
-export default function SongsPageClient({ songs, songTypes, leaders, canCreate, canEdit }: SongsPageClientProps) {
+export default function SongsPageClient({
+  songs,
+  songTypes,
+  leaders,
+  canCreate,
+  isAdmin,
+  currentUserId,
+}: SongsPageClientProps) {
   const [filters, setFilters] = useState<SongFiltersType>({
     search: "",
     songTypeId: "all",
@@ -92,7 +100,7 @@ export default function SongsPageClient({ songs, songTypes, leaders, canCreate, 
           </div>
         </CardHeader>
         <CardContent>
-          <SongsTable songs={filteredSongs} canEdit={canEdit} />
+          <SongsTable songs={filteredSongs} isAdmin={isAdmin} currentUserId={currentUserId} />
         </CardContent>
       </Card>
     </>

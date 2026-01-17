@@ -66,7 +66,7 @@ export default async function SongsPage() {
   const leaders = (allProfiles || []).filter((p) => creatorIds.includes(p.user_id))
 
   const canCreate = currentProfile?.role === "Admin" || currentProfile?.role === "Editor y Creador"
-  const canEdit = currentProfile?.role === "Admin"
+  const isAdmin = currentProfile?.role === "Admin"
 
   return (
     <div className="min-h-svh bg-gradient-to-br from-background to-muted/20">
@@ -89,7 +89,8 @@ export default async function SongsPage() {
           songTypes={songTypes || []}
           leaders={leaders || []}
           canCreate={canCreate}
-          canEdit={canEdit}
+          isAdmin={isAdmin}
+          currentUserId={user.id}
         />
       </div>
     </div>

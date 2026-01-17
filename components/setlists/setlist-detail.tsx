@@ -11,11 +11,16 @@ interface SetlistDetailProps {
   songs: any[]
 }
 
+function parseLocalDate(dateString: string): Date {
+  const [year, month, day] = dateString.split("-").map(Number)
+  return new Date(year, month - 1, day)
+}
+
 export default function SetlistDetail({ setlist, songs }: SetlistDetailProps) {
   const leaderName = setlist.profiles ? `${setlist.profiles.first_name} ${setlist.profiles.last_name}` : "Desconocido"
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-ES", {
+    return parseLocalDate(dateString).toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
       day: "numeric",
