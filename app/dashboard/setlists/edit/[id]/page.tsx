@@ -29,24 +29,51 @@ export default async function EditSetlistPage({
     redirect("/dashboard/setlists")
   }
 
-  // Obtener las canciones del setlist
   const { data: setlistSongs } = await supabase
     .from("setlist_songs")
-    .select("song_id, position")
+    .select("song_id, position, is_offering")
     .eq("setlist_id", id)
     .order("position")
 
-  // Obtener todas las canciones disponibles
-  const { data: songs } = await supabase.from("songs").select("id, name, artist").order("name")
+  const { data: songs } = await supabase
+    .from("songs")
+    .select("id, name, artist, key, lyrics, youtube_link, created_by")
+    .order("name")
+
+  const creatorIds = songs?.map((song) => song.created_by).filter(Boolean) || []
+  const uniqueCreatorIds = [...new Set(creatorIds)]
+
+  let creatorsMap: Record<string, any> = {}
+  if (uniqueCreatorIds.length > 0) {
+    const { data: creators } = await supabase
+      .from("profiles")
+      .select("user_id, first_name, last_name")
+      .in("user_id", uniqueCreatorIds)
+
+    creatorsMap =
+      creators?.reduce((acc: any, creator: any) => {
+        acc[creator.user_id] = creator
+        return acc
+      }, {}) || {}
+  }
+
+  const songsWithCreators =
+    songs?.map((song) => ({
+      ...song,
+      creator: creatorsMap[song.created_by] || null,
+    })) || []
+
+  const offeringSongIds = setlistSongs?.filter((s) => s.is_offering).map((s) => s.song_id) || []
 
   return (
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-6">Editar Lista de Canciones</h1>
       <SetlistForm
-        songs={songs || []}
+        songs={songsWithCreators}
         profile={profile}
         setlist={setlist}
         selectedSongIds={setlistSongs?.map((s) => s.song_id) || []}
+        offeringSongIds={offeringSongIds}
       />
     </div>
   )

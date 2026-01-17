@@ -21,17 +21,34 @@ export function SetlistsPageClient({ setlists, profile }: SetlistsPageClientProp
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  // Filtrar setlists según la opción seleccionada
+  // Filtrar y ordenar setlists según la opción seleccionada
   const filteredSetlists = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
+    let filtered: any[]
     if (filter === "upcoming") {
-      return setlists.filter((s) => new Date(s.date) >= today)
+      filtered = setlists.filter((s) => new Date(s.date) >= today)
     } else if (filter === "past") {
-      return setlists.filter((s) => new Date(s.date) < today)
+      filtered = setlists.filter((s) => new Date(s.date) < today)
+    } else {
+      filtered = [...setlists]
     }
-    return setlists
+
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.date).getTime()
+      const dateB = new Date(b.date).getTime()
+
+      if (filter === "past") {
+        // Para pasadas, mostrar las más recientes primero
+        return dateB - dateA
+      } else {
+        // Para próximas y todas, mostrar las más cercanas primero
+        return dateA - dateB
+      }
+    })
+
+    return filtered
   }, [setlists, filter])
 
   // Calcular paginación

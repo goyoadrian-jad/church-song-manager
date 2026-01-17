@@ -13,8 +13,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
-import { X, GripVertical, Eye, ExternalLink, Search } from "lucide-react"
+import { X, GripVertical, Eye, ExternalLink, Search, Gift } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
 
 interface Song {
   id: string
@@ -30,14 +31,26 @@ interface Song {
   }
 }
 
+interface SelectedSong {
+  id: string
+  isOffering: boolean
+}
+
 interface SetlistFormProps {
   songs: Song[]
   profile: any
   setlist?: any
   selectedSongIds?: string[]
+  offeringSongIds?: string[]
 }
 
-export default function SetlistForm({ songs, profile, setlist, selectedSongIds = [] }: SetlistFormProps) {
+export default function SetlistForm({
+  songs,
+  profile,
+  setlist,
+  selectedSongIds = [],
+  offeringSongIds = [],
+}: SetlistFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
@@ -49,7 +62,12 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
     notes: setlist?.notes || "",
   })
 
-  const [selectedSongs, setSelectedSongs] = useState<string[]>(selectedSongIds)
+  const [selectedSongs, setSelectedSongs] = useState<SelectedSong[]>(
+    selectedSongIds.map((id) => ({
+      id,
+      isOffering: offeringSongIds.includes(id),
+    })),
+  )
   const [searchTerm, setSearchTerm] = useState("")
   const [leaderFilter, setLeaderFilter] = useState("all")
 
@@ -68,7 +86,8 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
     [] as Array<{ user_id: string; first_name: string; last_name: string }>,
   )
 
-  const availableSongs = songs.filter((song) => !selectedSongs.includes(song.id))
+  const selectedSongIds2 = selectedSongs.map((s) => s.id)
+  const availableSongs = songs.filter((song) => !selectedSongIds2.includes(song.id))
 
   const filteredSongs = availableSongs.filter((song) => {
     const matchesSearch =
@@ -81,7 +100,18 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
   })
 
   const handleToggleSong = (songId: string) => {
-    setSelectedSongs((prev) => (prev.includes(songId) ? prev.filter((id) => id !== songId) : [...prev, songId]))
+    setSelectedSongs((prev) => {
+      const exists = prev.find((s) => s.id === songId)
+      if (exists) {
+        return prev.filter((s) => s.id !== songId)
+      } else {
+        return [...prev, { id: songId, isOffering: false }]
+      }
+    })
+  }
+
+  const handleToggleOffering = (songId: string) => {
+    setSelectedSongs((prev) => prev.map((s) => (s.id === songId ? { ...s, isOffering: !s.isOffering } : s)))
   }
 
   const moveSong = (index: number, direction: "up" | "down") => {
@@ -95,7 +125,7 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
   }
 
   const removeSong = (songId: string) => {
-    setSelectedSongs((prev) => prev.filter((id) => id !== songId))
+    setSelectedSongs((prev) => prev.filter((s) => s.id !== songId))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -159,10 +189,11 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
         setlistId = newSetlist.id
       }
 
-      const setlistSongsData = selectedSongs.map((songId, index) => ({
+      const setlistSongsData = selectedSongs.map((song, index) => ({
         setlist_id: setlistId,
-        song_id: songId,
+        song_id: song.id,
         position: index + 1,
+        is_offering: song.isOffering,
       }))
 
       const { error: songsError } = await supabase.from("setlist_songs").insert(setlistSongsData)
@@ -189,7 +220,12 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
   }
 
   const getSelectedSongDetails = () => {
-    return selectedSongs.map((id) => songs.find((s) => s.id === id)).filter(Boolean) as Song[]
+    return selectedSongs
+      .map((selected) => {
+        const song = songs.find((s) => s.id === selected.id)
+        return song ? { ...song, isOffering: selected.isOffering } : null
+      })
+      .filter(Boolean) as (Song & { isOffering: boolean })[]
   }
 
   return (
@@ -256,10 +292,19 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
                   <div key={song.id} className="flex items-start gap-3 p-4 bg-muted rounded-lg border">
                     <span className="font-bold text-lg w-8 mt-1">{index + 1}.</span>
                     <div className="flex-1 space-y-2">
-                      <div>
+                      <div className="flex items-center gap-2">
                         <p className="font-semibold text-lg">{song.name}</p>
-                        <p className="text-sm text-muted-foreground">{song.artist}</p>
+                        {song.isOffering && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100"
+                          >
+                            <Gift className="h-3 w-3 mr-1" />
+                            Ofrenda
+                          </Badge>
+                        )}
                       </div>
+                      <p className="text-sm text-muted-foreground">{song.artist}</p>
                       <div className="flex flex-wrap gap-4 text-sm">
                         {song.key && (
                           <span className="flex items-center gap-1">
@@ -272,7 +317,17 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
                           </span>
                         )}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          type="button"
+                          variant={song.isOffering ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleToggleOffering(song.id)}
+                          className={song.isOffering ? "bg-amber-600 hover:bg-amber-700" : ""}
+                        >
+                          <Gift className="h-4 w-4 mr-1" />
+                          {song.isOffering ? "Quitar Ofrenda" : "Para Ofrenda"}
+                        </Button>
                         {song.lyrics && (
                           <Dialog>
                             <DialogTrigger asChild>
@@ -374,7 +429,7 @@ export default function SetlistForm({ songs, profile, setlist, selectedSongIds =
                     className="flex items-center space-x-3 p-3 hover:bg-muted rounded-lg cursor-pointer"
                     onClick={() => handleToggleSong(song.id)}
                   >
-                    <Checkbox checked={selectedSongs.includes(song.id)} />
+                    <Checkbox checked={selectedSongIds2.includes(song.id)} />
                     <div className="flex-1">
                       <p className="font-medium">{song.name}</p>
                       <div className="flex gap-4 text-sm text-muted-foreground">

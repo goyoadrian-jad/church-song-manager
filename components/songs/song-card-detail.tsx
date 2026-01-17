@@ -10,7 +10,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Eye, ExternalLink, Music } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Eye, ExternalLink, Music, Gift } from "lucide-react"
 
 interface SongCardDetailProps {
   song: {
@@ -27,9 +28,16 @@ interface SongCardDetailProps {
   }
   position?: number
   showPosition?: boolean
+  isOffering?: boolean
 }
 
-export function SongCardDetail({ song, creator, position, showPosition = false }: SongCardDetailProps) {
+export function SongCardDetail({
+  song,
+  creator,
+  position,
+  showPosition = false,
+  isOffering = false,
+}: SongCardDetailProps) {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
@@ -39,7 +47,18 @@ export function SongCardDetail({ song, creator, position, showPosition = false }
           )}
 
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg truncate">{song.name}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold text-lg truncate">{song.name}</h3>
+              {isOffering && (
+                <Badge
+                  variant="secondary"
+                  className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100"
+                >
+                  <Gift className="h-3 w-3 mr-1" />
+                  Ofrenda
+                </Badge>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground truncate">{song.artist}</p>
 
             <div className="flex flex-wrap gap-3 mt-2 text-sm">

@@ -71,6 +71,7 @@ export default function SetlistDetail({ setlist, songs }: SetlistDetailProps) {
                 creator={item.songs.creator}
                 position={index + 1}
                 showPosition={true}
+                isOffering={item.is_offering}
               />
             ))}
           </div>

@@ -29,11 +29,11 @@ export default async function ViewSetlistPage({
     redirect("/dashboard/setlists")
   }
 
-  // Obtener las canciones del setlist con detalles completos
   const { data: setlistSongs } = await supabase
     .from("setlist_songs")
     .select(`
       position,
+      is_offering,
       songs(id, name, artist, key, lyrics, youtube_link, created_by)
     `)
     .eq("setlist_id", id)
