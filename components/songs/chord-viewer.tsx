@@ -100,7 +100,7 @@ export function ChordViewer({ lyrics, originalKey, chords }: ChordViewerProps) {
                 key={charIndex}
                 className={hasChord ? 'border-t-2 border-primary' : ''}
               >
-                {char === ' ' ? '\u00A0' : char}
+                {char === ' ' ? ' ' : char === '_' ? ' ' : char}
               </span>
             )
           })}
