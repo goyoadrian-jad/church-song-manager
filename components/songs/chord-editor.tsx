@@ -157,7 +157,12 @@ export function ChordEditor({
               key={idx}
               className="absolute cursor-pointer hover:text-destructive transition-colors"
               style={{ left: `${chord.charPosition * 0.6}em` }}
-              onClick={() => canEdit && handleCharClick(chord.lineIndex, chord.charPosition)}
+              onClick={(e) => {
+                e.stopPropagation()
+                if (canEdit) {
+                  setChords(chords.filter(c => !(c.lineIndex === chord.lineIndex && c.charPosition === chord.charPosition)))
+                }
+              }}
               title={canEdit ? "Click para eliminar" : ""}
             >
               {chord.chord}
@@ -170,62 +175,25 @@ export function ChordEditor({
           {line.split('').map((char, charIndex) => {
             const hasChord = getChordAtPosition(lineIndex, charIndex)
             return (
-              <Popover 
-                key={charIndex} 
-                open={popoverOpen && selectedPosition?.lineIndex === lineIndex && selectedPosition?.charPosition === charIndex}
-                onOpenChange={(open) => {
-                  if (!open) {
-                    setPopoverOpen(false)
-                    setSelectedPosition(null)
+              <span
+                key={charIndex}
+                className={`
+                  ${canEdit ? 'cursor-pointer hover:bg-primary/20' : ''}
+                  ${hasChord ? 'bg-primary/10 border-t-2 border-primary' : ''}
+                  transition-colors
+                `}
+                onClick={() => {
+                  if (!canEdit) return
+                  if (!hasChord) {
+                    setSelectedPosition({ lineIndex, charPosition: charIndex })
+                    setSelectedChord("")
+                    setCustomChord("")
+                    setPopoverOpen(true)
                   }
                 }}
               >
-                <PopoverTrigger asChild>
-                  <span
-                    className={`
-                      ${canEdit ? 'cursor-pointer hover:bg-primary/20' : ''}
-                      ${hasChord ? 'bg-primary/10 border-t-2 border-primary' : ''}
-                      transition-colors
-                    `}
-                    onClick={() => handleCharClick(lineIndex, charIndex)}
-                  >
-                    {char === ' ' ? '\u00A0' : char}
-                  </span>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-4" align="start">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Seleccionar acorde</Label>
-                      <Select value={selectedChord} onValueChange={(v) => { setSelectedChord(v); setCustomChord(""); }}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Elegir acorde..." />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-60">
-                          {availableChords.map((chord) => (
-                            <SelectItem key={chord} value={chord}>
-                              {chord}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>O escribir acorde personalizado</Label>
-                      <Input
-                        placeholder="Ej: Cmaj7, Dsus4..."
-                        value={customChord}
-                        onChange={(e) => { setCustomChord(e.target.value); setSelectedChord(""); }}
-                      />
-                    </div>
-
-                    <Button onClick={handleAddChord} className="w-full">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Agregar acorde
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                {char === ' ' ? '\u00A0' : char}
+              </span>
             )
           })}
           {line === '' && <span>&nbsp;</span>}
@@ -259,6 +227,61 @@ export function ChordEditor({
             Hacé click en cualquier letra para agregar un acorde. Click en un acorde existente para eliminarlo.
           </p>
         )}
+        
+        {/* Popover global para agregar acordes */}
+        <Popover 
+          open={popoverOpen} 
+          onOpenChange={(open) => {
+            setPopoverOpen(open)
+            if (!open) setSelectedPosition(null)
+          }}
+        >
+          <PopoverTrigger asChild>
+            <span className="hidden" />
+          </PopoverTrigger>
+          <PopoverContent className="w-72 p-4" align="start" side="top">
+            <div className="space-y-4">
+              <div className="text-sm font-medium">
+                Agregar acorde en posición seleccionada
+              </div>
+              <div className="space-y-2">
+                <Label>Seleccionar acorde</Label>
+                <Select value={selectedChord} onValueChange={(v) => { setSelectedChord(v); setCustomChord(""); }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Elegir acorde..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {availableChords.map((chord) => (
+                      <SelectItem key={chord} value={chord}>
+                        {chord}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>O escribir acorde personalizado</Label>
+                <Input
+                  placeholder="Ej: Cmaj7, Dsus4..."
+                  value={customChord}
+                  onChange={(e) => { setCustomChord(e.target.value); setSelectedChord(""); }}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <Button onClick={handleAddChord} className="flex-1">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar
+                </Button>
+                <Button variant="outline" onClick={() => setPopoverOpen(false)}>
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <div className="bg-muted/30 p-4 rounded-lg overflow-x-auto">
           <div className="space-y-1">
             {lines.map((line, lineIndex) => renderLine(line, lineIndex))}
