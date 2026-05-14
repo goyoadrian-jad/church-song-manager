@@ -208,14 +208,11 @@ export function ChordViewer({ lyrics, originalKey, chords }: ChordViewerProps) {
           </div>
 
           {originalKey && (
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground whitespace-nowrap">
               Original: <span className="font-bold">{originalKey}</span>
               {currentKey !== originalKey && (
-                <span> → <span className="font-bold text-primary">{currentKey}</span></span>
-              )}
-              {semitones !== 0 && (
-                <span className="ml-2">
-                  ({semitones > 0 ? '+' : ''}{semitones} {Math.abs(semitones) === 1 ? 'semitono' : 'semitonos'})
+                <span> → <span className="font-bold text-primary">{currentKey}</span>
+                  <span className="ml-1">({semitones > 0 ? '+' : ''}{semitones})</span>
                 </span>
               )}
             </div>
