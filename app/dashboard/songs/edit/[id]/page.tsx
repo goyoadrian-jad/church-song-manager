@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Music } from "lucide-react"
 import Link from "next/link"
 import { SongForm } from "@/components/songs/song-form"
 
@@ -41,10 +41,16 @@ export default async function EditSongPage({ params }: { params: Promise<{ id: s
               <ArrowLeft className="h-5 w-5" />
             </Link>
           </Button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-bold">Editar Canción</h1>
             <p className="text-muted-foreground">Actualiza los datos de la canción</p>
           </div>
+          <Button variant="outline" asChild>
+            <Link href={`/dashboard/songs/${id}/chords`}>
+              <Music className="h-4 w-4 mr-2" />
+              Editar Acordes
+            </Link>
+          </Button>
         </div>
 
         <SongForm song={song} songTypes={songTypes || []} userId={user.id} />
