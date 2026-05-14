@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { X, Plus, Save, Music } from "lucide-react"
-import { getAvailableChords, isValidChord } from "@/lib/music/chord-utils"
+import { Plus, Save, Music, AlertTriangle } from "lucide-react"
+import { getAvailableChords, isValidChord, analyzeChords } from "@/lib/music/chord-utils"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
 import { createBrowserClient } from "@/lib/supabase/client"
 
@@ -57,6 +58,11 @@ export function ChordEditor({
 
   const lines = lyrics.split('\n')
   const availableChords = getAvailableChords()
+  
+  // Analizar acordes fuera de escala
+  const scaleWarnings = originalKey 
+    ? analyzeChords(chords.map(c => c.chord), originalKey)
+    : []
 
   const getChordAtPosition = useCallback((lineIndex: number, charPosition: number) => {
     return chords.find(c => c.lineIndex === lineIndex && c.charPosition === charPosition)
@@ -192,7 +198,7 @@ export function ChordEditor({
                   }
                 }}
               >
-                {char === ' ' ? '\u00A0' : char}
+                {char === ' ' ? ' ' : char === '_' ? ' ' : char}
               </span>
             )
           })}
@@ -226,6 +232,26 @@ export function ChordEditor({
           <p className="text-sm text-muted-foreground mb-4">
             Hacé click en cualquier letra para agregar un acorde. Click en un acorde existente para eliminarlo.
           </p>
+        )}
+        
+        {/* Advertencias de acordes fuera de escala */}
+        {scaleWarnings.length > 0 && (
+          <Alert variant="default" className="mb-4 border-amber-500/50 bg-amber-500/10">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            <AlertTitle className="text-amber-600">Acordes fuera de la escala de {originalKey}</AlertTitle>
+            <AlertDescription className="text-amber-600/80">
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                {scaleWarnings.map((w, idx) => (
+                  <li key={idx}>
+                    <strong>{w.chord}</strong>: {w.warning}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-sm italic">
+                Esto es solo una advertencia. Podés guardar los acordes de todas formas.
+              </p>
+            </AlertDescription>
+          </Alert>
         )}
         
         {/* Popover global para agregar acordes */}

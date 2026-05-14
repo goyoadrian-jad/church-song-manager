@@ -89,3 +89,78 @@ export function isValidChord(chord: string): boolean {
   const root = getChordRoot(chord)
   return NOTE_MAP[root] !== undefined
 }
+
+// Escalas mayores - intervalos desde la tónica (en semitonos)
+// Grados: I, ii, iii, IV, V, vi, vii°
+const MAJOR_SCALE_INTERVALS = [0, 2, 4, 5, 7, 9, 11]
+
+// Acordes diatónicos para escala mayor:
+// I (mayor), ii (menor), iii (menor), IV (mayor), V (mayor), vi (menor), vii° (disminuido)
+const DIATONIC_CHORD_TYPES: Record<number, string[]> = {
+  0: ['', 'maj7', '7', 'sus4', 'sus2', 'add9'], // I - Mayor
+  2: ['m', 'm7'], // ii - menor
+  4: ['m', 'm7'], // iii - menor  
+  5: ['', 'maj7', 'sus4', 'sus2', 'add9'], // IV - Mayor
+  7: ['', '7', 'sus4', 'sus2'], // V - Mayor/Dominante
+  9: ['m', 'm7'], // vi - menor
+  11: ['dim', 'm7'] // vii° - disminuido
+}
+
+// Obtiene la nota raíz de un acorde
+export function getChordRootNote(chord: string): string {
+  return getChordRoot(chord)
+}
+
+// Verifica si un acorde está en la escala de una tonalidad
+export function isChordInKey(chord: string, key: string): { inScale: boolean; suggestion?: string } {
+  if (!chord || !key) return { inScale: true }
+  
+  const chordRoot = getChordRoot(chord)
+  const chordSuffix = getChordSuffix(chord)
+  const keyIndex = NOTE_MAP[key]
+  const chordRootIndex = NOTE_MAP[chordRoot]
+  
+  if (keyIndex === undefined || chordRootIndex === undefined) {
+    return { inScale: true }
+  }
+  
+  // Calcular el intervalo del acorde relativo a la tonalidad
+  const interval = ((chordRootIndex - keyIndex) % 12 + 12) % 12
+  
+  // Verificar si el intervalo está en la escala mayor
+  if (!MAJOR_SCALE_INTERVALS.includes(interval)) {
+    return { 
+      inScale: false, 
+      suggestion: `La nota ${chordRoot} no está en la escala de ${key} mayor`
+    }
+  }
+  
+  // Verificar si el tipo de acorde es diatónico para ese grado
+  const allowedTypes = DIATONIC_CHORD_TYPES[interval] || []
+  const isTypeAllowed = allowedTypes.includes(chordSuffix)
+  
+  if (!isTypeAllowed && chordSuffix !== '') {
+    // El acorde podría ser un préstamo modal o dominante secundario
+    return { 
+      inScale: false, 
+      suggestion: `${chord} podría ser un acorde prestado o dominante secundario`
+    }
+  }
+  
+  return { inScale: true }
+}
+
+// Analiza todos los acordes y devuelve los que están fuera de escala
+export function analyzeChords(chords: string[], key: string): Array<{ chord: string; warning: string }> {
+  const warnings: Array<{ chord: string; warning: string }> = []
+  const uniqueChords = [...new Set(chords)]
+  
+  for (const chord of uniqueChords) {
+    const result = isChordInKey(chord, key)
+    if (!result.inScale && result.suggestion) {
+      warnings.push({ chord, warning: result.suggestion })
+    }
+  }
+  
+  return warnings
+}
