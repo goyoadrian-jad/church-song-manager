@@ -11,7 +11,20 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Music, Minus, Plus } from "lucide-react"
-import { KEYS, transposeChord, getSemitonesBetweenKeys } from "@/lib/music/chord-utils"
+import { KEYS, transposeChord, getSemitonesBetweenKeys, transposeChordToKey } from "@/lib/music/chord-utils"
+
+// Mapa de índices de notas para calcular tonalidad desde semitonos
+const NOTE_INDEX_MAP: Record<string, number> = {
+  'C': 0, 'C#': 1, 'Db': 1,
+  'D': 2, 'D#': 3, 'Eb': 3,
+  'E': 4, 'F': 5, 'F#': 6, 'Gb': 6,
+  'G': 7, 'G#': 8, 'Ab': 8,
+  'A': 9, 'A#': 10, 'Bb': 10,
+  'B': 11
+}
+
+const NOTES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+const NOTES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
 
 interface ChordPosition {
   chord: string
@@ -26,37 +39,46 @@ interface ChordViewerProps {
 }
 
 export function ChordViewer({ lyrics, originalKey, chords }: ChordViewerProps) {
-  const [targetKey, setTargetKey] = useState<string>(originalKey || 'C')
-  const [semitoneOffset, setSemitoneOffset] = useState<number>(0)
+  // Usamos semitonos como estado principal para sincronizar ambos controles
+  const [semitones, setSemitones] = useState<number>(0)
 
   const lines = lyrics.split('\n')
 
-  // Calcular semitonos totales (desde tonalidad original + offset manual)
-  const totalSemitones = useMemo(() => {
-    if (!originalKey) return semitoneOffset
-    const keySemitones = getSemitonesBetweenKeys(originalKey, targetKey)
-    return keySemitones + semitoneOffset
-  }, [originalKey, targetKey, semitoneOffset])
+  // Calcular la tonalidad actual basada en los semitonos
+  const currentKey = useMemo(() => {
+    if (!originalKey) return 'C'
+    const originalIndex = NOTE_INDEX_MAP[originalKey] ?? 0
+    const useFlats = originalKey.includes('b') || ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb'].includes(originalKey)
+    const notesArray = useFlats ? NOTES_FLAT : NOTES_SHARP
+    const newIndex = ((originalIndex + semitones) % 12 + 12) % 12
+    return notesArray[newIndex]
+  }, [originalKey, semitones])
 
   // Transponer acordes
   const transposedChords = useMemo(() => {
-    const useFlats = targetKey.includes('b') || ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb'].includes(targetKey)
+    const useFlats = currentKey.includes('b') || ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb'].includes(currentKey)
     return chords.map(c => ({
       ...c,
-      chord: transposeChord(c.chord, totalSemitones, useFlats)
+      chord: transposeChord(c.chord, semitones, useFlats)
     }))
-  }, [chords, totalSemitones, targetKey])
+  }, [chords, semitones, currentKey])
 
+  // Cuando se cambia la tonalidad desde el combo, calcular los semitonos
   const handleKeyChange = (newKey: string) => {
-    setTargetKey(newKey)
-    setSemitoneOffset(0) // Reset offset cuando se cambia la tonalidad
+    if (!originalKey) {
+      setSemitones(0)
+      return
+    }
+    const newSemitones = getSemitonesBetweenKeys(originalKey, newKey)
+    setSemitones(newSemitones)
   }
 
+  // Cuando se cambian los semitonos con los botones
   const handleSemitoneChange = (delta: number) => {
-    const newOffset = semitoneOffset + delta
+    const newSemitones = semitones + delta
     // Limitar a -12 / +12
-    if (newOffset >= -12 && newOffset <= 12) {
-      setSemitoneOffset(newOffset)
+    if (newSemitones >= -12 && newSemitones <= 12) {
+      setSemitones(newSemitones)
     }
   }
 
@@ -144,7 +166,7 @@ export function ChordViewer({ lyrics, originalKey, chords }: ChordViewerProps) {
         <div className="flex flex-wrap items-center gap-4 p-4 bg-muted/30 rounded-lg">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Tonalidad:</span>
-            <Select value={targetKey} onValueChange={handleKeyChange}>
+            <Select value={currentKey} onValueChange={handleKeyChange}>
               <SelectTrigger className="w-20">
                 <SelectValue />
               </SelectTrigger>
@@ -166,19 +188,19 @@ export function ChordViewer({ lyrics, originalKey, chords }: ChordViewerProps) {
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => handleSemitoneChange(-1)}
-                disabled={semitoneOffset <= -12}
+                disabled={semitones <= -12}
               >
                 <Minus className="h-4 w-4" />
               </Button>
-              <span className="w-8 text-center font-mono">
-                {semitoneOffset >= 0 ? '+' : ''}{semitoneOffset}
+              <span className="w-10 text-center font-mono font-bold">
+                {semitones >= 0 ? '+' : ''}{semitones}
               </span>
               <Button
                 variant="outline"
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => handleSemitoneChange(1)}
-                disabled={semitoneOffset >= 12}
+                disabled={semitones >= 12}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -188,8 +210,13 @@ export function ChordViewer({ lyrics, originalKey, chords }: ChordViewerProps) {
           {originalKey && (
             <div className="text-sm text-muted-foreground">
               Original: <span className="font-bold">{originalKey}</span>
-              {targetKey !== originalKey && (
-                <span> → <span className="font-bold text-primary">{targetKey}</span></span>
+              {currentKey !== originalKey && (
+                <span> → <span className="font-bold text-primary">{currentKey}</span></span>
+              )}
+              {semitones !== 0 && (
+                <span className="ml-2">
+                  ({semitones > 0 ? '+' : ''}{semitones} {Math.abs(semitones) === 1 ? 'semitono' : 'semitonos'})
+                </span>
               )}
             </div>
           )}
