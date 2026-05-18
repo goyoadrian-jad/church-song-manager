@@ -19,31 +19,13 @@ export default async function CreateSetlistPage() {
 
   const { data: songs } = await supabase
     .from("songs")
-    .select("id, name, artist, key, lyrics, youtube_link, created_by")
+    .select("id, name, artist, key, lyrics, youtube_link")
     .order("name")
-
-  // Obtener información de los creadores desde profiles
-  const creatorIds = songs?.map((song) => song.created_by).filter(Boolean) || []
-  const { data: creators } = await supabase
-    .from("profiles")
-    .select("user_id, first_name, last_name")
-    .in("user_id", creatorIds)
-
-  // Combinar la información
-  const songsWithCreators = songs?.map((song) => ({
-    ...song,
-    creator: creators?.find((c) => c.user_id === song.created_by)
-      ? {
-          first_name: creators.find((c) => c.user_id === song.created_by)?.first_name || "",
-          last_name: creators.find((c) => c.user_id === song.created_by)?.last_name || "",
-        }
-      : null,
-  }))
 
   return (
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-6">Crear Lista de Canciones</h1>
-      <SetlistForm songs={songsWithCreators || []} profile={profile} />
+      <SetlistForm songs={songs || []} profile={profile} />
     </div>
   )
 }

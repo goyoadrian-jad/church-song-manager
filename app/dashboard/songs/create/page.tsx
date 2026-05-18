@@ -24,6 +24,11 @@ export default async function CreateSongPage() {
   // Get song types for the form
   const { data: songTypes } = await supabase.from("song_types").select("*").order("name")
 
+  // Get existing songs for duplicate validation
+  const { data: existingSongs } = await supabase
+    .from("songs")
+    .select("id, name, artist, lyrics, song_type_id, youtube_link")
+
   return (
     <div className="min-h-svh bg-gradient-to-br from-background to-muted/20">
       <div className="container mx-auto px-6 py-8 max-w-3xl">
@@ -39,7 +44,7 @@ export default async function CreateSongPage() {
           </div>
         </div>
 
-        <SongForm songTypes={songTypes || []} userId={user.id} />
+        <SongForm songTypes={songTypes || []} userId={user.id} existingSongs={existingSongs || []} />
       </div>
     </div>
   )

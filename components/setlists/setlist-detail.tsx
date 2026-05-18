@@ -73,7 +73,6 @@ export default function SetlistDetail({ setlist, songs }: SetlistDetailProps) {
               <SongCardDetail
                 key={item.position}
                 song={item.songs}
-                creator={item.songs.creator}
                 position={index + 1}
                 showPosition={true}
                 isOffering={item.is_offering}

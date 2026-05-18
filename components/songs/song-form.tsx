@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
+import { findDuplicates, type DuplicateCandidate } from "@/lib/songs/duplicate-validator"
+import { AlertTriangle } from "lucide-react"
 
 const MUSIC_KEYS = [
   "C",
@@ -62,9 +65,17 @@ interface SongFormProps {
     name: string
   }>
   userId: string
+  existingSongs?: Array<{
+    id: string
+    name: string
+    artist: string
+    lyrics: string
+    song_type_id?: string | null
+    youtube_link?: string | null
+  }>
 }
 
-export function SongForm({ song, songTypes, userId }: SongFormProps) {
+export function SongForm({ song, songTypes, userId, existingSongs = [] }: SongFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [formData, setFormData] = useState({
@@ -79,9 +90,47 @@ export function SongForm({ song, songTypes, userId }: SongFormProps) {
   })
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [duplicates, setDuplicates] = useState<DuplicateCandidate[]>([])
+  const [confirmDuplicate, setConfirmDuplicate] = useState(false)
+
+  // Verificar duplicados cuando cambian los campos relevantes
+  useEffect(() => {
+    if (formData.name.length < 3 && formData.lyrics.length < 50) {
+      setDuplicates([])
+      return
+    }
+
+    const timer = setTimeout(() => {
+      const found = findDuplicates(
+        {
+          name: formData.name,
+          lyrics: formData.lyrics,
+          song_type_id: formData.songTypeId || null,
+          youtube_link: formData.youtubeLink || null,
+        },
+        existingSongs,
+        song?.id // Excluir la canción actual si estamos editando
+      )
+      setDuplicates(found)
+      setConfirmDuplicate(false) // Reset confirmación si cambian los datos
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [formData.name, formData.lyrics, formData.songTypeId, formData.youtubeLink, existingSongs, song?.id])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Verificar si hay duplicados y no se ha confirmado
+    if (duplicates.length > 0 && !confirmDuplicate) {
+      toast({
+        title: "Posibles duplicados encontrados",
+        description: "Revisa las canciones similares abajo y confirma si deseas continuar",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
@@ -263,6 +312,38 @@ export function SongForm({ song, songTypes, userId }: SongFormProps) {
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
+
+          {/* Alerta de posibles duplicados */}
+          {duplicates.length > 0 && (
+            <Alert variant="default" className="border-amber-500/50 bg-amber-500/10">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <AlertTitle className="text-amber-600">Posibles canciones duplicadas encontradas</AlertTitle>
+              <AlertDescription className="text-amber-600/80">
+                <p className="mb-3">Se encontraron {duplicates.length} canción(es) similar(es) en el sistema:</p>
+                <ul className="space-y-2 mb-4">
+                  {duplicates.slice(0, 3).map((dup) => (
+                    <li key={dup.id} className="p-2 bg-amber-500/10 rounded">
+                      <strong>{dup.name}</strong> - {dup.artist}
+                      <br />
+                      <span className="text-sm">{dup.reason}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="confirmDuplicate"
+                    checked={confirmDuplicate}
+                    onChange={(e) => setConfirmDuplicate(e.target.checked)}
+                    className="rounded border-amber-500"
+                  />
+                  <label htmlFor="confirmDuplicate" className="text-sm cursor-pointer">
+                    Confirmo que esta canción NO es un duplicado y deseo guardarla
+                  </label>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="flex gap-4">
             <Button type="submit" disabled={isLoading}>

@@ -16,14 +16,12 @@ interface Song {
   key: string
   created_by?: string
   song_types?: { id: string; name: string } | null
-  creator?: { first_name: string; last_name: string } | null
   [key: string]: any
 }
 
 interface SongsPageClientProps {
   songs: Song[]
   songTypes: Array<{ id: string; name: string }>
-  leaders: Array<{ user_id: string; first_name: string; last_name: string }>
   canCreate: boolean
   isAdmin: boolean
   currentUserId: string
@@ -32,7 +30,6 @@ interface SongsPageClientProps {
 export default function SongsPageClient({
   songs,
   songTypes,
-  leaders,
   canCreate,
   isAdmin,
   currentUserId,
@@ -41,7 +38,6 @@ export default function SongsPageClient({
     search: "",
     songTypeId: "all",
     key: "all",
-    leaderId: "all",
   })
 
   const filteredSongs = useMemo(() => {
@@ -66,18 +62,14 @@ export default function SongsPageClient({
         if (song.key !== filters.key) return false
       }
 
-      if (filters.leaderId !== "all") {
-        if (song.created_by !== filters.leaderId) return false
-      }
-
       return true
     })
   }, [songs, filters])
 
   return (
     <>
-      {/* Filters - Pasar leaders */}
-      <SongFilters onFilterChange={setFilters} songTypes={songTypes} leaders={leaders} />
+      {/* Filters */}
+      <SongFilters onFilterChange={setFilters} songTypes={songTypes} />
 
       {/* Songs Table */}
       <Card>

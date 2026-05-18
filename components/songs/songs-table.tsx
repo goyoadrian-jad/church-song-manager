@@ -94,7 +94,7 @@ export function SongsTable({ songs, isAdmin, currentUserId }: SongsTableProps) {
               <TableHead>Artista</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Tonalidad</TableHead>
-              <TableHead>Líder</TableHead>
+              <TableHead>Cargado por</TableHead>
               <TableHead>YouTube</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
