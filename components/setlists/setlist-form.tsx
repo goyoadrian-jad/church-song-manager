@@ -248,6 +248,7 @@ export default function SetlistForm({
               <SelectItem value="Miércoles">Miércoles</SelectItem>
               <SelectItem value="Domingo AM">Domingo AM</SelectItem>
               <SelectItem value="Domingo PM">Domingo PM</SelectItem>
+              <SelectItem value="Domingo PM">Reunion especial</SelectItem>
             </SelectContent>
           </Select>
         </div>
