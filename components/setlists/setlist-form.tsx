@@ -69,22 +69,6 @@ export default function SetlistForm({
     })),
   )
   const [searchTerm, setSearchTerm] = useState("")
-  const [leaderFilter, setLeaderFilter] = useState("all")
-
-  // Get unique leaders from songs
-  const leaders = songs.reduce(
-    (acc, song) => {
-      if (song.created_by && song.creator && !acc.find((l) => l.user_id === song.created_by)) {
-        acc.push({
-          user_id: song.created_by,
-          first_name: song.creator.first_name,
-          last_name: song.creator.last_name,
-        })
-      }
-      return acc
-    },
-    [] as Array<{ user_id: string; first_name: string; last_name: string }>,
-  )
 
   const selectedSongIds2 = selectedSongs.map((s) => s.id)
   const availableSongs = songs.filter((song) => !selectedSongIds2.includes(song.id))
@@ -94,9 +78,7 @@ export default function SetlistForm({
       song.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       song.artist.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesLeader = leaderFilter === "all" || song.created_by === leaderFilter
-
-    return matchesSearch && matchesLeader
+    return matchesSearch
   })
 
   const handleToggleSong = (songId: string) => {
@@ -311,11 +293,6 @@ export default function SetlistForm({
                             <strong>Tonalidad:</strong> {song.key}
                           </span>
                         )}
-                        {song.creator && (
-                          <span className="flex items-center gap-1">
-                            <strong>Líder:</strong> {song.creator.first_name} {song.creator.last_name}
-                          </span>
-                        )}
                       </div>
                       <div className="flex gap-2 flex-wrap">
                         <Button
@@ -388,29 +365,14 @@ export default function SetlistForm({
       <div className="space-y-4">
         <Label>Seleccionar Canciones ({availableSongs.length} disponibles)</Label>
 
-        <div className="flex gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar canciones..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={leaderFilter} onValueChange={setLeaderFilter}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filtrar por líder" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los líderes</SelectItem>
-              {leaders.map((leader) => (
-                <SelectItem key={leader.user_id} value={leader.user_id}>
-                  {leader.first_name} {leader.last_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar canciones..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
 
         <Card className="max-h-96 overflow-y-auto">
@@ -418,7 +380,7 @@ export default function SetlistForm({
             <div className="space-y-2">
               {filteredSongs.length === 0 ? (
                 <p className="text-center text-muted-foreground py-4">
-                  {searchTerm || leaderFilter !== "all"
+                  {searchTerm
                     ? "No se encontraron canciones"
                     : "Todas las canciones están seleccionadas"}
                 </p>
@@ -435,11 +397,6 @@ export default function SetlistForm({
                       <div className="flex gap-4 text-sm text-muted-foreground">
                         <span>{song.artist}</span>
                         {song.key && <span>• {song.key}</span>}
-                        {song.creator && (
-                          <span>
-                            • {song.creator.first_name} {song.creator.last_name}
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>

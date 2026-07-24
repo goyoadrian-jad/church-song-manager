@@ -22,10 +22,6 @@ interface SongCardDetailProps {
     lyrics?: string
     youtube_link?: string
   }
-  creator?: {
-    first_name: string
-    last_name: string
-  }
   position?: number
   showPosition?: boolean
   isOffering?: boolean
@@ -33,7 +29,6 @@ interface SongCardDetailProps {
 
 export function SongCardDetail({
   song,
-  creator,
   position,
   showPosition = false,
   isOffering = false,
@@ -67,12 +62,6 @@ export function SongCardDetail({
                   <Music className="h-3 w-3" />
                   <span className="font-medium">{song.key}</span>
                 </div>
-              )}
-
-              {creator && (
-                <span className="text-muted-foreground">
-                  Líder: {creator.first_name} {creator.last_name}
-                </span>
               )}
             </div>
           </div>
